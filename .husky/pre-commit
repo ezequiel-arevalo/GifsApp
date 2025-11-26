@@ -1,0 +1,48 @@
+echo "🔧 Ejecutando pre-commit checks..."
+
+# --------------------------------------
+# 1) Verificar que haya cambios staged
+# --------------------------------------
+STAGED_FILES=$(git diff --cached --name-only)
+
+if [ -z "$STAGED_FILES" ]; then
+  echo "⚠️ No hay archivos staged. Nada para validar."
+  exit 0
+fi
+
+# --------------------------------------
+# 2) Validar TypeScript (rápido)
+#    evitando un build completo
+# --------------------------------------
+echo "🧪 Revisando tipos con TypeScript..."
+npx tsc --noEmit
+if [ $? -ne 0 ]; then
+  echo "❌ Error: falló la verificación de tipos."
+  exit 1
+fi
+
+# --------------------------------------
+# 3) Lint + format con Biome
+#    Solo en archivos staged
+# --------------------------------------
+echo "✨ Formateando y analizando con Biome..."
+
+# Filtrar solo archivos relevantes
+STAGED_JS_TS=$(echo "$STAGED_FILES" | grep -E "\.(js|jsx|ts|tsx)$")
+
+if [ -n "$STAGED_JS_TS" ]; then
+  npx biome check --write $STAGED_JS_TS
+  if [ $? -ne 0 ]; then
+    echo "❌ Biome encontró problemas que no se pudieron corregir automáticamente."
+    exit 1
+  fi
+fi
+
+# --------------------------------------
+# 4) Re-agregar cambios que fueron formateados
+# --------------------------------------
+echo "📌 Actualizando staging area..."
+git add .
+
+echo "✅ Pre-commit completado correctamente!"
+exit 0

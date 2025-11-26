@@ -1,0 +1,57 @@
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+echo "📝 Validando mensaje de commit..."
+
+# --------------------------------------
+# 1) Verificar que el commit no esté vacío
+# --------------------------------------
+if [ -z "$COMMIT_MSG" ] || [ "$COMMIT_MSG" = "" ]; then
+  echo "❌ El mensaje de commit está vacío."
+  echo "   Por favor escribí un mensaje descriptivo."
+  exit 1
+fi
+
+# --------------------------------------
+# 2) Bloquear commits genéricos o basura
+# --------------------------------------
+BAD_COMMIT_REGEX="^(wip|temp|test|update|changes|fixing|asdf|qwe)$"
+
+if echo "$COMMIT_MSG" | grep -Eiq "$BAD_COMMIT_REGEX"; then
+  echo "❌ El mensaje de commit es demasiado genérico:"
+  echo "   '$COMMIT_MSG'"
+  echo ""
+  echo "Usá un mensaje más descriptivo siguiendo la convención."
+  exit 1
+fi
+
+# --------------------------------------
+# 3) Confirmar que el tipo del commit existe
+#    (feat, fix, docs, refactor, chore, etc.)
+# --------------------------------------
+VALID_TYPES="(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)"
+
+if ! echo "$COMMIT_MSG" | grep -Eiq "^$VALID_TYPES"; then
+  echo "❌ El commit debe comenzar con un tipo válido."
+  echo "   Ejemplo: feat: agregar login"
+  exit 1
+fi
+
+# --------------------------------------
+# 4) Validar usando commitlint
+# --------------------------------------
+echo "🔍 Ejecutando commitlint..."
+
+npx commitlint --edit "$COMMIT_MSG_FILE"
+RESULT=$?
+
+if [ $RESULT -ne 0 ]; then
+  echo "❌ commitlint detectó errores en el mensaje."
+  exit 1
+fi
+
+# --------------------------------------
+# 5) Validación final
+# --------------------------------------
+echo "✅ Commit válido — todo listo!"
+exit 0
