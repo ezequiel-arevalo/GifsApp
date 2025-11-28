@@ -1,8 +1,7 @@
+#!/bin/sh
+
 echo "🔎 Iniciando controles previos al push..."
 
-# -----------------------------
-# 1) Obtener rama actual
-# -----------------------------
 CURRENT_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null)
 
 if [ -z "$CURRENT_BRANCH" ]; then
@@ -12,17 +11,11 @@ fi
 
 echo "🌿 Rama detectada: $CURRENT_BRANCH"
 
-# -----------------------------
-# 2) Excepciones para ramas principales
-# -----------------------------
 if [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "master" ]; then
   echo "⏭️  Saltando validaciones para rama principal."
   exit 0
 fi
 
-# -----------------------------
-# 3) Bloqueo de palabras genéricas o basura
-# -----------------------------
 BLOCKED_WORDS="(wip|temp|test|tmp|draft|demo|asd|qwe|123|abc|backup|copy|new|old|sample)"
 
 if echo "$CURRENT_BRANCH" | grep -E "$BLOCKED_WORDS" >/dev/null; then
@@ -31,9 +24,6 @@ if echo "$CURRENT_BRANCH" | grep -E "$BLOCKED_WORDS" >/dev/null; then
   exit 1
 fi
 
-# -----------------------------
-# 4) Patrones válidos de nombres de rama
-# -----------------------------
 VALID_PATTERNS="^(feature\/[a-z0-9-]+|fix\/[a-z0-9-]+|refactor\/[a-z0-9-]+|docs\/[a-z0-9-]+|chore\/[a-z0-9-]+|release\/[0-9]+\.[0-9]+\.[0-9]+|[A-Z]+-[0-9]+\/[a-z0-9-]+)$"
 
 if echo "$CURRENT_BRANCH" | grep -E "$VALID_PATTERNS" >/dev/null; then
@@ -49,14 +39,11 @@ else
   echo "  • docs/actualizar-docs"
   echo "  • chore/mantenimiento"
   echo "  • release/1.2.3"
-  echo "  • ABC-123/descripcion (para ramas con ticket)"
+  echo "  • ABC-123/descripcion"
   echo ""
   exit 1
 fi
 
-# -----------------------------
-# 5) Verificación de tipos
-# -----------------------------
 echo "🧪 Revisando typescript..."
 npm run type-check >/dev/null 2>&1
 if [ $? -ne 0 ]; then
@@ -64,20 +51,13 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# -----------------------------
-# 6) Linting con Biome
-# -----------------------------
 echo "🧹 Corriendo Biome..."
-npx biome check src >/dev/null
+npx biome check --write src >/dev/null
 if [ $? -ne 0 ]; then
-  echo "❌ Biome detectó problemas."
-  echo "   Ejecutá: npx biome check --write src"
+  echo "❌ Biome detectó problemas que no pudo corregir."
   exit 1
 fi
 
-# -----------------------------
-# 7) Build del proyecto
-# -----------------------------
 echo "🏗️ Compilando proyecto..."
 npm run build
 if [ $? -ne 0 ]; then
@@ -87,3 +67,4 @@ fi
 
 echo ""
 echo "🎉 Todo OK — Push autorizado!"
+exit 0
