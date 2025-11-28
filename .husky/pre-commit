@@ -28,7 +28,7 @@ fi
 echo "✨ Formateando y analizando con Biome..."
 
 # Filtrar solo archivos relevantes
-STAGED_JS_TS=$(echo "$STAGED_FILES" | grep -E "\.(js|jsx|ts|tsx)$")
+STAGED_JS_TS=$(git diff --cached --name-only -- '*.js' '*.jsx' '*.ts' '*.tsx')
 
 if [ -n "$STAGED_JS_TS" ]; then
   npx biome check --write $STAGED_JS_TS
