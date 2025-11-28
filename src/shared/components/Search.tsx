@@ -19,8 +19,6 @@ export const Search = ({ placeholder, onQuery }: SearchProps) => {
 	};
 
 	useEffect(() => {
-		if (query.trim() === '') return;
-
 		const intervalId = setTimeout(() => {
 			onQuery(query);
 			setQuery('');
